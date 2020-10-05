@@ -1,20 +1,55 @@
 import express from 'express';
 import morgan from 'morgan';
+import helmet from 'helmet';
 import cors from 'cors';
-import {connect} from 'mongoose';
-import bodyParser from 'body-parser';
-const PORT = 4000;
+import {connect, connection} from 'mongoose';
+// import bodyParser from 'body-parser';
 
 require("dotenv").config();
 
+import {notFound, errorHandler} from '../middlewares';
+// import {todos} from './api/todos'
+const todos = require("./api/todos");
+
 const app = express();
 
-app.use(cors());
-app.use(bodyParser.json());
+connect(process.env.DATABASE_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true, });
 
-app.listen(PORT, function(){
-    console.log("server is running on port: " + PORT)
+connection.once('open', () => {
+    console.log("MongoDB database connection established successfully");
 });
+
+
+app.use(morgan("common"));
+app.use(helmet());
+app.use(
+    cors({
+        origin: process.env.CORS_ORIGIN,
+    }
+));
+app.use(express.json());
+
+app.get("/",(req,res) =>{
+    res.json({
+        message:"Hello World"
+    })
+});
+
+app.use("/api/todos", todos);
+app.use(notFound);
+app.use(errorHandler);
+
+
+const port = process.env.PORT || 8080;
+app.listen(port, () => {
+    console.log(`server is running on port: ${port}`)
+});
+
+
+
+
 
 
 
